@@ -49,4 +49,35 @@ const validateLoginRequest = (req) => {
   }
 };
 
-module.exports = { validateSignUpRequest, validateLoginRequest };
+const validateCreateNotesRequest = (req) => {
+  const ALLOWED_KEYS = ["title", "content", "tags"];
+
+  validateKeys(req, ALLOWED_KEYS);
+
+  const { title, content, tags = [] } = req.body;
+
+  if (!title) {
+    throw new Error("title missing from request");
+  }
+
+  if (!content) {
+    throw new Error("content missing from request");
+  }
+
+  if (tags.length > 15) {
+    throw new Error("maximum of 15 tags can be sent");
+  }
+};
+
+const validateUpdateNotesRequest = (req) => {
+  const ALLOWED_KEYS = ["title", "content", "tags"];
+
+  validateKeys(req, ALLOWED_KEYS);
+};
+
+module.exports = {
+  validateSignUpRequest,
+  validateLoginRequest,
+  validateCreateNotesRequest,
+  validateUpdateNotesRequest,
+};
