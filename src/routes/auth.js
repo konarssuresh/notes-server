@@ -22,7 +22,6 @@ authRouter.post("/signup", async (req, res) => {
 
 authRouter.post("/login", async (req, res) => {
   try {
-    console.log(process.env.HELLO);
     validateLoginRequest(req);
     const { emailId, password } = req.body;
     const user = await User.findOne({ emailId });
