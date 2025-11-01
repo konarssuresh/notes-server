@@ -1,4 +1,5 @@
 const express = require("express");
+
 const bcrypt = require("bcrypt");
 const {
   validateSignUpRequest,
@@ -35,7 +36,13 @@ authRouter.post("/login", async (req, res) => {
     }
 
     const token = user.generateAuthToken();
-    res.cookie("token", token);
+    res.cookie("token", token, {
+      // samesite should be none and secure should be true in production
+      sameSite: "lax",
+      secure: false,
+      httpOnly: true,
+      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    });
 
     res.send("login successful");
   } catch (e) {
