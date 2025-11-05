@@ -36,14 +36,20 @@ authRouter.post("/login", async (req, res) => {
     }
 
     const token = user.generateAuthToken();
-    res.cookie("token", token, {
-      // samesite should be none and secure should be true in production
-      sameSite: "lax",
-      secure: false,
+    const isProd = process.env.NODE_ENV === "production";
+    const cookieOptions = {
       httpOnly: true,
       expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    });
+      secure: isProd, // true in prod (HTTPS), false locally (HTTP)
+      sameSite: isProd ? "none" : "lax", // cross-site cookies require none+secure
+      path: "/",
+    };
 
+    if (isProd && process.env.COOKIE_DOMAIN) {
+      cookieOptions.domain = process.env.COOKIE_DOMAIN; // e.g. ".example.com"
+    }
+
+    res.cookie("token", token, cookieOptions);
     res.send("login successful");
   } catch (e) {
     res.status(400).send(`Error - ${e?.message}`);

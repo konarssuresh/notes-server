@@ -14,9 +14,17 @@ const notesRouter = require("./routes/notes");
 
 const app = express();
 
+const allowedOrigins = (process.env.CORS_ORIGINS || "http://localhost:5173")
+  .split(",")
+  .map((u) => u.trim());
+
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(new Error("CORS policy: Origin not allowed"), false);
+    },
     credentials: true,
   })
 );
@@ -30,7 +38,7 @@ app.use("/", notesRouter);
 connectDb()
   .then(() => {
     console.log("db connection established");
-    app.listen(8000, (err) => {
+    app.listen(process.env.PORT, (err) => {
       if (!err) {
         console.log("app listening on port 8000");
       }
