@@ -98,6 +98,39 @@ authRouter.post("/google/login", async (req, res) => {
   }
 });
 
+authRouter.post("/google/signup", async (req, res) => {
+  try {
+    validateGoogleLogin(req);
+    const { credential } = req.body;
+    const ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: process.env.OAUTH_CLIENT,
+    });
+
+    const payload = ticket.getPayload();
+
+    const { email, given_name, family_name } = payload;
+
+    const user = await User.findOne({ emailId: email });
+    if (user) {
+      throw new Error("User already exist");
+    }
+
+    let newUser = new User({
+      emailId: email,
+      firstName: given_name,
+      lastName: family_name,
+      verified: true,
+    });
+
+    await newUser.save();
+
+    res.send({ message: "User created successfully" });
+  } catch (e) {
+    res.status(400).send(`Error - ${e?.message}`);
+  }
+});
+
 authRouter.post("/logout", async (req, res) => {
   res.cookie("token", null);
   res.json({ message: "logout successful" });
