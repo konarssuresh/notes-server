@@ -41,6 +41,8 @@ connectDb()
     app.listen(process.env.PORT, (err) => {
       if (!err) {
         console.log("app listening on port 8000");
+      } else {
+        console.log(err);
       }
     });
   })

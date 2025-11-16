@@ -49,6 +49,15 @@ const validateLoginRequest = (req) => {
   }
 };
 
+const validateGoogleLogin = (req) => {
+  const ALLOWED_KEYS = ["credential"];
+  validateKeys(req, ALLOWED_KEYS);
+  const { credential } = req.body;
+  if (!credential) {
+    throw new Error("credential are required");
+  }
+};
+
 const validateCreateNotesRequest = (req) => {
   const ALLOWED_KEYS = ["title", "content", "tags"];
 
@@ -80,4 +89,5 @@ module.exports = {
   validateLoginRequest,
   validateCreateNotesRequest,
   validateUpdateNotesRequest,
+  validateGoogleLogin,
 };

@@ -4,8 +4,11 @@ const bcrypt = require("bcrypt");
 const {
   validateSignUpRequest,
   validateLoginRequest,
+  validateGoogleLogin,
 } = require("../utils/validators");
 const { User } = require("../models/user");
+
+const client = require("../config/google-client");
 
 const authRouter = express.Router();
 
@@ -52,6 +55,45 @@ authRouter.post("/login", async (req, res) => {
     res.cookie("token", token, cookieOptions);
     res.send("login successful");
   } catch (e) {
+    res.status(400).send(`Error - ${e?.message}`);
+  }
+});
+
+authRouter.post("/google/login", async (req, res) => {
+  try {
+    validateGoogleLogin(req);
+    const { credential } = req.body;
+    const ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: process.env.OAUTH_CLIENT,
+    });
+
+    const payload = ticket.getPayload();
+
+    const { email } = payload;
+    const user = await User.findOne({ emailId: email });
+    if (!user) {
+      throw new Error("User does not exist");
+    }
+
+    const token = user.generateAuthToken();
+    const isProd = process.env.NODE_ENV === "production";
+    const cookieOptions = {
+      httpOnly: true,
+      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      secure: isProd, // true in prod (HTTPS), false locally (HTTP)
+      sameSite: isProd ? "none" : "lax", // cross-site cookies require none+secure
+      path: "/",
+    };
+
+    if (isProd && process.env.COOKIE_DOMAIN) {
+      cookieOptions.domain = process.env.COOKIE_DOMAIN; // e.g. ".example.com"
+    }
+
+    res.cookie("token", token, cookieOptions);
+
+    res.send(payload);
+  } catch (err) {
     res.status(400).send(`Error - ${e?.message}`);
   }
 });
